@@ -104,8 +104,7 @@ public static class ServiceCollectionExtensions
             .WithDescription("重置记忆")
             .WithDisplayName("重置记忆")
             .WithTags("记忆");
-
-
+        
         return app;
     }
 }
