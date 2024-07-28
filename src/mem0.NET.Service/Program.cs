@@ -21,7 +21,7 @@ public static class Program
         builder.Services.AddMem0DotNet(options =>
         {
             options.OpenAIEndpoint = "https://api.token-ai.cn";
-            options.OpenAIKey = "sk-OA1gOTApL3EXG3AhJXwzTrxHS1xSggHBj7ilvx";
+            options.OpenAIKey = "请在 https://api.token-ai.cn 注册获取";
             options.OpenAIChatCompletionModel = "gpt-4o-mini";
             options.OpenAITextEmbeddingModel = "text-embedding-ada-002";
             options.CollectionName = "mem0.NET";
