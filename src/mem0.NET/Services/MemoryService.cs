@@ -10,11 +10,21 @@ using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.Embeddings;
 
+#pragma warning disable SKEXP0050
+
 #pragma warning disable SKEXP0001
 
 namespace mem0.NET.Services;
 
-public class MemoryService
+/// <summary>
+/// Memory service.
+/// </summary>
+public class MemoryService(
+    IVectorStoreService vectorStoreService,
+    Kernel kernel,
+    ITextEmbeddingGenerationService textEmbeddingGenerationService,
+    IChatCompletionService chatCompletionService,
+    IHistoryService historyService)
 {
     private const string MemoryDeductionPrompt = """
                                                  Deduce the facts, preferences, and memories from the provided text.
@@ -49,11 +59,13 @@ public class MemoryService
                                               """;
 
 
+    /// <summary>
+    /// 创建记忆
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="mem0DotNetOptions"></param>
     public async Task CreateMemoryAsync(CreateMemoryInput input,
-        ITextEmbeddingGenerationService textEmbeddingGenerationService,
-        IChatCompletionService chatCompletionService,
-        Mem0DotNetOptions mem0DotNetOptions,
-        IVectorStoreService vectorStoreService, Kernel kernel)
+        Mem0DotNetOptions mem0DotNetOptions)
     {
         var embeddings = await textEmbeddingGenerationService.GenerateEmbeddingAsync(input.Data);
 
@@ -117,7 +129,6 @@ public class MemoryService
                 ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
             }, kernel);
 
-        Console.WriteLine(content.Content);
     }
 
     private List<ChatMessageContent> get_update_memory_messages(object serializedExistingMemories,
@@ -136,9 +147,13 @@ public class MemoryService
         };
     }
 
+    /// <summary>
+    /// 创建记忆工具
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="mem0DotNetOptions"></param>
     public async Task CreateMemoryToolAsync(CreateMemoryToolInput input,
-        ITextEmbeddingGenerationService textEmbeddingGenerationService,
-        Mem0DotNetOptions mem0DotNetOptions, IVectorStoreService vectorStoreService)
+        Mem0DotNetOptions mem0DotNetOptions)
     {
         var embeddings = await textEmbeddingGenerationService.GenerateEmbeddingAsync(input.Data);
 
@@ -151,7 +166,13 @@ public class MemoryService
             [memoryId]);
     }
 
-    public async Task<VectorData> GetMemory(string memoryId, IVectorStoreService vectorStoreService,
+    /// <summary>
+    /// 获取缓存
+    /// </summary>
+    /// <param name="memoryId"></param>
+    /// <param name="options"></param>
+    /// <returns></returns>
+    public async Task<VectorData> GetMemory(string memoryId,
         Mem0DotNetOptions options)
     {
         var memory = await vectorStoreService.Get(options.CollectionName, memoryId);
@@ -164,7 +185,16 @@ public class MemoryService
         return memory;
     }
 
-    public async Task<List<VectorData>> GetMemoryAll(IVectorStoreService vectorStoreService, Mem0DotNetOptions options,
+    /// <summary>
+    /// 获取所有记忆
+    /// </summary>
+    /// <param name="options"></param>
+    /// <param name="userId"></param>
+    /// <param name="agentId"></param>
+    /// <param name="runId"></param>
+    /// <param name="limit"></param>
+    /// <returns></returns>
+    public async Task<List<VectorData>> GetMemoryAll(Mem0DotNetOptions options,
         string? userId,
         string? agentId, string? runId, uint limit = 100)
     {
@@ -189,8 +219,17 @@ public class MemoryService
         return memories;
     }
 
-    public async Task<List<VectorData>> SearchMemory(IVectorStoreService vectorStoreService,
-        ITextEmbeddingGenerationService textEmbeddingGenerationService, Mem0DotNetOptions options,
+    /// <summary>
+    /// 搜索记忆
+    /// </summary>
+    /// <param name="options"></param>
+    /// <param name="query"></param>
+    /// <param name="userId"></param>
+    /// <param name="agentId"></param>
+    /// <param name="runId"></param>
+    /// <param name="limit"></param>
+    /// <returns></returns>
+    public async Task<List<VectorData>> SearchMemory(Mem0DotNetOptions options,
         string query, string? userId,
         string? agentId, string? runId, uint limit = 100)
     {
@@ -222,17 +261,36 @@ public class MemoryService
         }).ToList();
     }
 
+    /// <summary>
+    /// 更新记忆
+    /// </summary>
+    /// <param name="input"></param>
+    /// <param name="memoryTool"></param>
     public async Task Update(UpdateMemoryInput input, MemoryTool memoryTool)
     {
         await memoryTool.UpdateMemory(input.MemoryId, input.Data);
     }
 
+    /// <summary>
+    /// 删除指定记忆
+    /// </summary>
+    /// <param name="memoryId"></param>
+    /// <param name="memoryTool"></param>
     public async Task Delete(string memoryId, MemoryTool memoryTool)
     {
         await memoryTool.DeleteMemory(memoryId);
     }
 
-    public async Task DeleteAll(string? userId, string? agentId, string? runId, IVectorStoreService vectorStoreService,
+    /// <summary>
+    /// 删除所有记忆
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <param name="agentId"></param>
+    /// <param name="runId"></param>
+    /// <param name="options"></param>
+    /// <param name="memoryTool"></param>
+    /// <exception cref="Exception"></exception>
+    public async Task DeleteAll(string? userId, string? agentId, string? runId,
         Mem0DotNetOptions options, MemoryTool memoryTool)
     {
         var filters = new Dictionary<string, object>();
@@ -265,13 +323,24 @@ public class MemoryService
         }
     }
 
-    public async Task<List<History>> GetHistory(string memoryId, IHistoryService historyService)
+    /// <summary>
+    /// 获取历史
+    /// </summary>
+    /// <param name="memoryId"></param>
+    /// <returns></returns>
+    public async Task<List<History>> GetHistory(string memoryId)
     {
         var histories = await historyService.GetHistories(memoryId);
 
         return histories;
     }
 
+    /// <summary>
+    /// 重置记忆
+    /// </summary>
+    /// <param name="vectorStoreService"></param>
+    /// <param name="mem0DotNetOptions"></param>
+    /// <param name="historyService"></param>
     public async Task Reset(IVectorStoreService vectorStoreService, Mem0DotNetOptions mem0DotNetOptions,
         IHistoryService historyService)
     {

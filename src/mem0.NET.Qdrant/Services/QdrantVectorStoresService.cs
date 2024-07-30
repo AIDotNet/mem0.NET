@@ -7,7 +7,6 @@ using Qdrant.Client.Grpc;
 using Distance = Qdrant.Client.Grpc.Distance;
 using MDistance = mem0.Core.Distance;
 using OptimizerStatus = mem0.Core.Model.OptimizerStatus;
-using Range = Qdrant.Client.Grpc.Range;
 
 namespace mem0.NET.Qdrabt.Services;
 

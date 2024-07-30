@@ -22,56 +22,46 @@ public static class ServiceCollectionExtensions
 
         memoryService.MapPost("/memory", async (MemoryService memoryService,
             CreateMemoryInput input,
-            ITextEmbeddingGenerationService textEmbeddingGenerationService,
-            IChatCompletionService chatCompletionService,
-            Kernel kernel,
-            Mem0DotNetOptions mem0DotNetOptions,
-            IVectorStoreService vectorStoreService) =>
+            Mem0DotNetOptions mem0DotNetOptions) =>
         {
-            await memoryService.CreateMemoryAsync(input, textEmbeddingGenerationService, chatCompletionService,
-                mem0DotNetOptions, vectorStoreService, kernel);
+            await memoryService.CreateMemoryAsync(input,
+                mem0DotNetOptions);
         }).WithDescription("创建记忆").WithDisplayName("创建记忆").WithTags("记忆").WithName("CreateMemory");
 
         memoryService.MapPost("memory_tool", async (MemoryService memoryService,
             CreateMemoryToolInput input,
-            ITextEmbeddingGenerationService textEmbeddingGenerationService,
-            Mem0DotNetOptions mem0DotNetOptions,
-            IVectorStoreService vectorStoreService) =>
+            Mem0DotNetOptions mem0DotNetOptions) =>
         {
-            await memoryService.CreateMemoryToolAsync(input, textEmbeddingGenerationService,
-                mem0DotNetOptions, vectorStoreService);
+            await memoryService.CreateMemoryToolAsync(input,
+                mem0DotNetOptions);
         }).WithDescription("创建记忆工具").WithDisplayName("创建记忆工具").WithTags("记忆");
 
-        memoryService.MapGet("history/{memoryId}", async (MemoryService memoryService, string memoryId,
-                IHistoryService historyService) => await memoryService.GetHistory(memoryId, historyService))
+        memoryService.MapGet("history/{memoryId}",
+                async (MemoryService memoryService, string memoryId) => await memoryService.GetHistory(memoryId))
             .WithDescription("获取历史").WithDisplayName("获取历史").WithTags("记忆");
 
         memoryService.MapGet("memory/{memoryId}", async (MemoryService memoryService, string memoryId,
-                    Mem0DotNetOptions options,
-                    IVectorStoreService vectorStoreService) =>
-                await memoryService.GetMemory(memoryId, vectorStoreService, options))
+                    Mem0DotNetOptions options) =>
+                await memoryService.GetMemory(memoryId, options))
             .WithDescription("获取记忆")
             .WithDisplayName("获取记忆")
             .WithTags("记忆");
 
         memoryService.MapGet("memory", async (MemoryService memoryService,
-                    IVectorStoreService vectorStoreService,
                     Mem0DotNetOptions options,
                     string? userId,
                     string? agentId, string? runId, uint limit) =>
-                await memoryService.GetMemoryAll(vectorStoreService, options, userId, agentId, runId, limit))
+                await memoryService.GetMemoryAll(options, userId, agentId, runId, limit))
             .WithDescription("获取所有记忆")
             .WithDisplayName("获取所有记忆")
             .WithTags("记忆");
 
         memoryService.MapGet("search", async (MemoryService memoryService,
-                    IVectorStoreService vectorStoreService,
-                    ITextEmbeddingGenerationService textEmbeddingGenerationService,
                     Mem0DotNetOptions options,
                     string query,
                     string? userId,
                     string? agentId, string? runId, uint limit) =>
-                await memoryService.SearchMemory(vectorStoreService, textEmbeddingGenerationService, options, query,
+                await memoryService.SearchMemory(options, query,
                     userId,
                     agentId, runId, limit))
             .WithDescription("搜索记忆")
@@ -91,9 +81,9 @@ public static class ServiceCollectionExtensions
             .WithTags("记忆");
 
         memoryService.MapDelete("memory", async (MemoryService memoryService, string? userId,
-                    string? agentId, string? runId, IVectorStoreService vectorStoreService,
+                    string? agentId, string? runId,
                     Mem0DotNetOptions options, MemoryTool memoryTool) =>
-                await memoryService.DeleteAll(userId, agentId, runId, vectorStoreService, options, memoryTool))
+                await memoryService.DeleteAll(userId, agentId, runId, options, memoryTool))
             .WithDescription("删除所有记忆")
             .WithDisplayName("删除所有记忆")
             .WithTags("记忆");
@@ -104,7 +94,7 @@ public static class ServiceCollectionExtensions
             .WithDescription("重置记忆")
             .WithDisplayName("重置记忆")
             .WithTags("记忆");
-        
+
         return app;
     }
 }
