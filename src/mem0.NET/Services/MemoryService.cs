@@ -21,12 +21,10 @@ namespace mem0.NET.Services;
 /// </summary>
 public class MemoryService(
     IVectorStoreService vectorStoreService,
-    Kernel kernel,
-    ITextEmbeddingGenerationService textEmbeddingGenerationService,
-    IChatCompletionService chatCompletionService,
-    IHistoryService historyService)
+    IHistoryService historyService) : IMemoryService
 {
     private const string MemoryDeductionPrompt = """
+                                                 Output in the original language of the content
                                                  Deduce the facts, preferences, and memories from the provided text.
                                                  Just return the facts, preferences, and memories in bullet points:
                                                  Natural language text: {user_input}
@@ -63,8 +61,14 @@ public class MemoryService(
     /// 创建记忆
     /// </summary>
     /// <param name="input"></param>
+    /// <param name="textEmbeddingGenerationService"></param>
+    /// <param name="chatCompletionService"></param>
+    /// <param name="kernel"></param>
     /// <param name="mem0DotNetOptions"></param>
     public async Task CreateMemoryAsync(CreateMemoryInput input,
+        ITextEmbeddingGenerationService textEmbeddingGenerationService,
+        IChatCompletionService chatCompletionService,
+        Kernel kernel,
         Mem0DotNetOptions mem0DotNetOptions)
     {
         var embeddings = await textEmbeddingGenerationService.GenerateEmbeddingAsync(input.Data);
@@ -96,7 +100,7 @@ public class MemoryService(
         var extracted_memories = await chatCompletionService.GetChatMessageContentAsync(new ChatHistory()
         {
             new(AuthorRole.System,
-                "You are an expert at deducing facts, preferences and memories from unstructured text."),
+                "你是一个从非结构化文本中推断事实、偏好和记忆的专家。"),
             new(AuthorRole.User, input.Prompt)
         });
 
@@ -153,6 +157,8 @@ public class MemoryService(
     /// <param name="input"></param>
     /// <param name="mem0DotNetOptions"></param>
     public async Task CreateMemoryToolAsync(CreateMemoryToolInput input,
+        ITextEmbeddingGenerationService textEmbeddingGenerationService,
+        IChatCompletionService chatCompletionService,
         Mem0DotNetOptions mem0DotNetOptions)
     {
         var embeddings = await textEmbeddingGenerationService.GenerateEmbeddingAsync(input.Data);
@@ -230,6 +236,8 @@ public class MemoryService(
     /// <param name="limit"></param>
     /// <returns></returns>
     public async Task<List<VectorData>> SearchMemory(Mem0DotNetOptions options,
+        ITextEmbeddingGenerationService textEmbeddingGenerationService,
+        IChatCompletionService chatCompletionService,
         string query, string? userId,
         string? agentId, string? runId, uint limit = 100)
     {
@@ -328,7 +336,7 @@ public class MemoryService(
     /// </summary>
     /// <param name="memoryId"></param>
     /// <returns></returns>
-    public async Task<List<History>> GetHistory(string memoryId)
+    public async Task<List<History>> GetHistory(string memoryId, IHistoryService historyService)
     {
         var histories = await historyService.GetHistories(memoryId);
 
@@ -338,11 +346,8 @@ public class MemoryService(
     /// <summary>
     /// 重置记忆
     /// </summary>
-    /// <param name="vectorStoreService"></param>
     /// <param name="mem0DotNetOptions"></param>
-    /// <param name="historyService"></param>
-    public async Task Reset(IVectorStoreService vectorStoreService, Mem0DotNetOptions mem0DotNetOptions,
-        IHistoryService historyService)
+    public async Task Reset(Mem0DotNetOptions mem0DotNetOptions)
     {
         await vectorStoreService.DeleteCol(mem0DotNetOptions.CollectionName);
 

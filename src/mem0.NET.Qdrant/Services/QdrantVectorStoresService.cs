@@ -254,7 +254,7 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         var result = (await client.RetrieveAsync(name, ids: new List<PointId>()
         {
             pointId
-        })).FirstOrDefault();
+        },true,true)).FirstOrDefault();
 
         return new VectorData()
         {
