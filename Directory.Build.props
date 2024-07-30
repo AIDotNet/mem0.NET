@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup>
-        <Version>0.1.0</Version>
-        <AssemblyVersion>0.1.0</AssemblyVersion>
+        <Version>0.1.1</Version>
+        <AssemblyVersion>0.1.1</AssemblyVersion>
         <Authors>AIDotNet</Authors>
         <Company>AIDotNet</Company>
         <PackageId>$(AssemblyName)</PackageId>
@@ -9,9 +9,11 @@
         <RepositoryUrl>https://github.com/AIDotNet/mem0.NET</RepositoryUrl>
         <RepositoryType>git</RepositoryType>
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
+        <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
         <SKVersion>1.16.1</SKVersion>
         <MicrosoftVersion>8.0.0</MicrosoftVersion>
         <EntityFrameworkVersion>8.0.7</EntityFrameworkVersion>
         <QdrantVersion>1.10.0</QdrantVersion>
+        <GenerateDocumentationFile>True</GenerateDocumentationFile>
     </PropertyGroup>
 </Project>
