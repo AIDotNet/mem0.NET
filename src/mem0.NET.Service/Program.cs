@@ -37,7 +37,7 @@ public static class Program
 
         using (var scope = app.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<MasterDbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<Mem0DbContext>();
 
             dbContext.Database.EnsureCreatedAsync();
         }

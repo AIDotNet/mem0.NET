@@ -1,7 +1,7 @@
 <Project>
     <PropertyGroup>
-        <Version>0.1.1</Version>
-        <AssemblyVersion>0.1.1</AssemblyVersion>
+        <Version>0.1.2</Version>
+        <AssemblyVersion>0.1.2</AssemblyVersion>
         <Authors>AIDotNet</Authors>
         <Company>AIDotNet</Company>
         <PackageId>$(AssemblyName)</PackageId>

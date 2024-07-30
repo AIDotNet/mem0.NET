@@ -11,7 +11,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddMem0DotNetEntityFramework(this IServiceCollection services,
         Action<DbContextOptionsBuilder>? optionsAction = null)
     {
-        services.AddDbContext<MasterDbContext>(optionsAction);
+        services.AddDbContext<Mem0DbContext>(optionsAction);
 
         services.AddScoped<IHistoryService, HistoryService>();
         

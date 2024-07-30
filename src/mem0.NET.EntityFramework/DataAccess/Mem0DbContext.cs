@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace mem0.NET.Service.DataAccess;
 
-public class MasterDbContext(DbContextOptions<MasterDbContext> options) : DbContext(options)
+public class Mem0DbContext(DbContextOptions<Mem0DbContext> options) : DbContext(options)
 {
     public DbSet<History> Histories { get; set; }
 

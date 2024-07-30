@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace mem0.NET.EntityFramework.Services;
 
-public sealed class HistoryService(MasterDbContext dbContext) : IHistoryService
+public sealed class HistoryService(Mem0DbContext dbContext) : IHistoryService
 {
     public async Task AddHistory(string memoryId, string prevValue, string newValue, string @event,
         bool isDeleted = false)
