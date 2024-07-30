@@ -27,7 +27,7 @@ public static class ServiceCollectionExtensions
             return client;
         });
 
-        services.Services.AddSingleton<IVectorStoreService, QdrantVectorStoresService>();
+        services.Services.AddScoped<IVectorStoreService, QdrantVectorStoresService>();
 
         return services;
     }

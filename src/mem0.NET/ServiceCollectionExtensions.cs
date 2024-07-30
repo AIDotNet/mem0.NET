@@ -15,7 +15,7 @@ public static class ServiceCollectionExtensions
         var options = new Mem0DotNetOptions();
         mem0DotNetOptions(options);
 
-        services.AddScoped<MemoryService>();
+        services.AddTransient<MemoryService>();
         
         services.AddSingleton<Mem0DotNetOptions>((_) => options);
         var openAiHttpClientHandler = new OpenAIHttpClientHandler(options.OpenAIEndpoint);
@@ -33,7 +33,7 @@ public static class ServiceCollectionExtensions
 
 #pragma warning restore SKEXP0010
 
-        services.AddScoped<MemoryTool>();
+        services.AddTransient<MemoryTool>();
 
         return new Mem0Builder(services);
     }
