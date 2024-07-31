@@ -114,6 +114,7 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         var filter = CreateFilter(filters);
         var hits = await client.SearchAsync(name, query.ToArray(), filter, limit: limit);
 
+        
         return hits.Select(hit => new SearchHit
         {
             Id = hit.Id,

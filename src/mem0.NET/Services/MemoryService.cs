@@ -5,6 +5,7 @@ using mem0.Core.Model;
 using mem0.Core.VectorStores;
 using mem0.NET.Functions;
 using mem0.NET.Options;
+using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
@@ -21,20 +22,25 @@ namespace mem0.NET.Services;
 /// </summary>
 public class MemoryService(
     IVectorStoreService vectorStoreService,
-    IHistoryService historyService) : IMemoryService
+    MemoryToolService memoryToolService,
+    ITextEmbeddingGenerationService textEmbeddingGenerationService,
+    IChatCompletionService chatCompletionService,
+    IOptions<Mem0Options> options,
+    Kernel kernel,
+    IHistoryService historyService)
 {
     private const string MemoryDeductionPrompt = """
-                                                 Output in the original language of the content
                                                  Deduce the facts, preferences, and memories from the provided text.
                                                  Just return the facts, preferences, and memories in bullet points:
                                                  Natural language text: {user_input}
                                                  User/Agent details: {metadata}
-
+                                                 
                                                  Constraint for deducing facts, preferences, and memories:
                                                  - The facts, preferences, and memories should be concise and informative.
                                                  - Don't start by "The person likes Pizza". Instead, start with "Likes Pizza".
                                                  - Don't remember the user/agent details provided. Only remember the facts, preferences, and memories.
-
+                                                 - Output content in the original language
+                                                 
                                                  Deduced facts, preferences, and memories:
                                                  """;
 
@@ -61,15 +67,7 @@ public class MemoryService(
     /// 创建记忆
     /// </summary>
     /// <param name="input"></param>
-    /// <param name="textEmbeddingGenerationService"></param>
-    /// <param name="chatCompletionService"></param>
-    /// <param name="kernel"></param>
-    /// <param name="mem0DotNetOptions"></param>
-    public async Task CreateMemoryAsync(CreateMemoryInput input,
-        ITextEmbeddingGenerationService textEmbeddingGenerationService,
-        IChatCompletionService chatCompletionService,
-        Kernel kernel,
-        Mem0DotNetOptions mem0DotNetOptions)
+    public async Task CreateMemoryAsync(CreateMemoryInput input)
     {
         var embeddings = await textEmbeddingGenerationService.GenerateEmbeddingAsync(input.Data);
 
@@ -100,14 +98,14 @@ public class MemoryService(
         var extracted_memories = await chatCompletionService.GetChatMessageContentAsync(new ChatHistory()
         {
             new(AuthorRole.System,
-                "你是一个从非结构化文本中推断事实、偏好和记忆的专家。"),
+                "You are an expert at deducing facts, preferences and memories from unstructured text."),
             new(AuthorRole.User, input.Prompt)
         });
 
-        await vectorStoreService.CreateCol(mem0DotNetOptions.CollectionName, 1536);
+        await vectorStoreService.CreateCol(options.Value.CollectionName, 1536);
 
         var existing_memories = (
-                await vectorStoreService.Search(mem0DotNetOptions.CollectionName, embeddings.ToArray(), 5, filters))
+                await vectorStoreService.Search(options.Value.CollectionName, embeddings.ToArray(), 5, filters))
             .Select(x => new
             {
                 id = x.Id,
@@ -132,7 +130,6 @@ public class MemoryService(
             {
                 ToolCallBehavior = ToolCallBehavior.AutoInvokeKernelFunctions,
             }, kernel);
-
     }
 
     private List<ChatMessageContent> get_update_memory_messages(object serializedExistingMemories,
@@ -155,11 +152,7 @@ public class MemoryService(
     /// 创建记忆工具
     /// </summary>
     /// <param name="input"></param>
-    /// <param name="mem0DotNetOptions"></param>
-    public async Task CreateMemoryToolAsync(CreateMemoryToolInput input,
-        ITextEmbeddingGenerationService textEmbeddingGenerationService,
-        IChatCompletionService chatCompletionService,
-        Mem0DotNetOptions mem0DotNetOptions)
+    public async Task CreateMemoryToolAsync(CreateMemoryToolInput input)
     {
         var embeddings = await textEmbeddingGenerationService.GenerateEmbeddingAsync(input.Data);
 
@@ -167,7 +160,7 @@ public class MemoryService(
         input.MetaData.Add("data", input.Data);
         input.MetaData.Add("created_at", DateTime.Now);
 
-        await vectorStoreService.Insert(mem0DotNetOptions.CollectionName, [[..embeddings.ToArray()]],
+        await vectorStoreService.Insert(options.Value.CollectionName, [[..embeddings.ToArray()]],
             [input.MetaData],
             [memoryId]);
     }
@@ -176,12 +169,10 @@ public class MemoryService(
     /// 获取缓存
     /// </summary>
     /// <param name="memoryId"></param>
-    /// <param name="options"></param>
     /// <returns></returns>
-    public async Task<VectorData> GetMemory(string memoryId,
-        Mem0DotNetOptions options)
+    public async Task<VectorData> GetMemory(string memoryId)
     {
-        var memory = await vectorStoreService.Get(options.CollectionName, memoryId);
+        var memory = await vectorStoreService.Get(options.Value.CollectionName, memoryId);
 
         if (memory == null)
         {
@@ -194,14 +185,12 @@ public class MemoryService(
     /// <summary>
     /// 获取所有记忆
     /// </summary>
-    /// <param name="options"></param>
     /// <param name="userId"></param>
     /// <param name="agentId"></param>
     /// <param name="runId"></param>
     /// <param name="limit"></param>
     /// <returns></returns>
-    public async Task<List<VectorData>> GetMemoryAll(Mem0DotNetOptions options,
-        string? userId,
+    public async Task<List<VectorData>> GetMemoryAll(string? userId,
         string? agentId, string? runId, uint limit = 100)
     {
         var filters = new Dictionary<string, object>();
@@ -220,7 +209,7 @@ public class MemoryService(
             filters.Add("run_id", runId);
         }
 
-        var memories = await vectorStoreService.List(options.CollectionName, filters, limit);
+        var memories = await vectorStoreService.List(options.Value.CollectionName, filters, limit);
 
         return memories;
     }
@@ -228,17 +217,13 @@ public class MemoryService(
     /// <summary>
     /// 搜索记忆
     /// </summary>
-    /// <param name="options"></param>
     /// <param name="query"></param>
     /// <param name="userId"></param>
     /// <param name="agentId"></param>
     /// <param name="runId"></param>
     /// <param name="limit"></param>
     /// <returns></returns>
-    public async Task<List<VectorData>> SearchMemory(Mem0DotNetOptions options,
-        ITextEmbeddingGenerationService textEmbeddingGenerationService,
-        IChatCompletionService chatCompletionService,
-        string query, string? userId,
+    public async Task<List<VectorData>> SearchMemory(string query, string? userId,
         string? agentId, string? runId, uint limit = 100)
     {
         var embeddings = await textEmbeddingGenerationService.GenerateEmbeddingAsync(query);
@@ -259,7 +244,20 @@ public class MemoryService(
             filters.Add("run_id", runId);
         }
 
-        var memories = await vectorStoreService.Search(options.CollectionName, embeddings.ToArray(), limit, filters);
+        var memories =
+            await vectorStoreService.Search(options.Value.CollectionName, embeddings.ToArray(), limit, filters);
+
+        memories.ForEach(x =>
+        {
+            foreach (var o in x.Payload)
+            {
+                var str = o.Value.ToString();
+                if (!string.IsNullOrEmpty(str))
+                {
+                    x.Payload[o.Key] = JsonSerializer.Deserialize<VectorDataPayload>(str).stringValue;
+                }
+            }
+        });
 
         return memories.Select(x => new VectorData()
         {
@@ -273,20 +271,18 @@ public class MemoryService(
     /// 更新记忆
     /// </summary>
     /// <param name="input"></param>
-    /// <param name="memoryTool"></param>
-    public async Task Update(UpdateMemoryInput input, MemoryTool memoryTool)
+    public async Task Update(UpdateMemoryInput input)
     {
-        await memoryTool.UpdateMemory(input.MemoryId, input.Data);
+        await memoryToolService.UpdateMemory(input.MemoryId, input.Data);
     }
 
     /// <summary>
     /// 删除指定记忆
     /// </summary>
     /// <param name="memoryId"></param>
-    /// <param name="memoryTool"></param>
-    public async Task Delete(string memoryId, MemoryTool memoryTool)
+    public async Task Delete(string memoryId)
     {
-        await memoryTool.DeleteMemory(memoryId);
+        await memoryToolService.DeleteMemory(memoryId);
     }
 
     /// <summary>
@@ -295,11 +291,8 @@ public class MemoryService(
     /// <param name="userId"></param>
     /// <param name="agentId"></param>
     /// <param name="runId"></param>
-    /// <param name="options"></param>
-    /// <param name="memoryTool"></param>
     /// <exception cref="Exception"></exception>
-    public async Task DeleteAll(string? userId, string? agentId, string? runId,
-        Mem0DotNetOptions options, MemoryTool memoryTool)
+    public async Task DeleteAll(string? userId, string? agentId, string? runId)
     {
         var filters = new Dictionary<string, object>();
         if (!string.IsNullOrEmpty(userId))
@@ -323,11 +316,11 @@ public class MemoryService(
                 "At least one filter is required to delete all memories. If you want to delete all memories, use the `reset()` method.");
         }
 
-        var memories = await vectorStoreService.List(options.CollectionName, filters);
+        var memories = await vectorStoreService.List(options.Value.CollectionName, filters);
 
         foreach (var memory in memories)
         {
-            await memoryTool.DeleteMemory(memory.Id.ToString());
+            await memoryToolService.DeleteMemory(memory.Id.ToString());
         }
     }
 
@@ -336,7 +329,7 @@ public class MemoryService(
     /// </summary>
     /// <param name="memoryId"></param>
     /// <returns></returns>
-    public async Task<List<History>> GetHistory(string memoryId, IHistoryService historyService)
+    public async Task<List<History>> GetHistory(string memoryId)
     {
         var histories = await historyService.GetHistories(memoryId);
 
@@ -346,10 +339,9 @@ public class MemoryService(
     /// <summary>
     /// 重置记忆
     /// </summary>
-    /// <param name="mem0DotNetOptions"></param>
-    public async Task Reset(Mem0DotNetOptions mem0DotNetOptions)
+    public async Task Reset()
     {
-        await vectorStoreService.DeleteCol(mem0DotNetOptions.CollectionName);
+        await vectorStoreService.DeleteCol(options.Value.CollectionName);
 
         await historyService.ResetHistory();
     }

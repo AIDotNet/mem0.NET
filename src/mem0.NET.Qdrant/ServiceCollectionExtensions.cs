@@ -11,14 +11,11 @@ public static class ServiceCollectionExtensions
     /// 注册Vector Qdrant实现
     /// </summary>
     /// <param name="services"></param>
-    /// <param name="qdrantOptions"></param>
+    /// <param name="options"></param>
     /// <returns></returns>
     public static Mem0Builder AddVectorQdrant(this Mem0Builder services,
-        Action<QdrantOptions> qdrantOptions)
+        QdrantOptions options)
     {
-        var options = new QdrantOptions();
-        qdrantOptions.Invoke(options);
-
         services.Services.AddSingleton(_ =>
         {
             var client = new QdrantClient(options.Host, options.Port, options.Https, options.ApiKey,
@@ -27,7 +24,7 @@ public static class ServiceCollectionExtensions
             return client;
         });
 
-        services.Services.AddScoped<IVectorStoreService, QdrantVectorStoresService>();
+        services.Services.AddSingleton<IVectorStoreService, QdrantVectorStoresService>();
 
         return services;
     }

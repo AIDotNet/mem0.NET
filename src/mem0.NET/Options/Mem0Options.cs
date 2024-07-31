@@ -1,6 +1,9 @@
 ﻿namespace mem0.NET.Options;
 
-public class Mem0DotNetOptions
+/// <summary>
+/// mem0 配置
+/// </summary>
+public class Mem0Options
 {
     /// <summary>
     /// OpenAI Endpoint https://api.token-ai.cn

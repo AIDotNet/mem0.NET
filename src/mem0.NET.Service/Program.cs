@@ -1,6 +1,8 @@
+using mem0.NET.Options;
 using mem0.NET.Service.DataAccess;
 using mem0.NET.Service.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection.Options;
 
 namespace mem0.NET.Service;
 
@@ -10,28 +12,23 @@ public static class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
-        builder.Services.AddMem0DotNetEntityFramework(options =>
-        {
-            options.UseNpgsql(builder.Configuration.GetConnectionString("Default"));
-        });
-
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen();
 
-        builder.Services.AddMem0DotNet(options =>
-        {
-            options.OpenAIEndpoint = "https://api.token-ai.cn";
-            options.OpenAIKey = "请在 https://api.token-ai.cn 注册获取";
-            options.OpenAIChatCompletionModel = "gpt-4o-mini";
-            options.OpenAITextEmbeddingModel = "text-embedding-ada-002";
-            options.CollectionName = "mem0.NET";
-        }).AddVectorQdrant(options =>
-        {
-            options.Host = "localhost";
-            options.Port = 6334;
-            options.Https = false;
-            options.ApiKey = "dd666666";
-        });
+        builder.Services.AddOptions<Mem0Options>()
+            .Bind(builder.Configuration.GetSection("Mem0"));
+
+        builder.Services.AddOptions<QdrantOptions>()
+            .Bind(builder.Configuration.GetSection("Qdrant"));
+
+        var options = builder.Configuration.GetSection("Mem0")
+            .Get<Mem0Options>();
+        var qdrantOptions = builder.Configuration.GetSection("Qdrant")
+            .Get<QdrantOptions>();
+
+        builder.Services.AddMem0DotNet(options,
+                optionsBuilder => { optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("Default")); })
+            .AddVectorQdrant(qdrantOptions);
 
         var app = builder.Build();
 

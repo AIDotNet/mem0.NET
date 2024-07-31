@@ -8,8 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <ProjectReference Include="..\mem0.Core\mem0.Core.csproj"/>
-        <ProjectReference Include="..\mem0.NET.EntityFramework\mem0.NET.EntityFramework.csproj"/>
         <ProjectReference Include="..\mem0.NET.Qdrant\mem0.NET.Qdrant.csproj"/>
         <ProjectReference Include="..\mem0.NET\mem0.NET.csproj"/>
     </ItemGroup>

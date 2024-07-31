@@ -1,6 +1,6 @@
 ﻿namespace mem0.Core;
 
-public class Mem0Context
+public class ApplicationContext
 {
     /// <summary>
     /// 用于存储当前上下文的对象
