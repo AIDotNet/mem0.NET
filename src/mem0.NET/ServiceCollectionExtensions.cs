@@ -16,12 +16,14 @@ namespace Microsoft.Extensions.DependencyInjection;
 public static class ServiceCollectionExtensions
 {
     public static Mem0Builder AddMem0DotNet(this IServiceCollection services, Mem0Options value,
-        Action<DbContextOptionsBuilder> optionsAction)
+        Action<DbContextOptionsBuilder> optionsAction, HttpClientHandler? openAiHttpClientHandler = null)
     {
         services.AddSingleton<MemoryService>();
         services.AddSingleton<MemoryToolService>();
 
-        var openAiHttpClient = new HttpClient(new OpenAIHttpClientHandler(value.OpenAIEndpoint));
+        var handler = openAiHttpClientHandler ?? new OpenAIHttpClientHandler(value.OpenAIEndpoint);
+
+        var openAiHttpClient = new HttpClient(handler);
 
         var kernelBuilder = services.AddKernel()
             .AddOpenAIChatCompletion(value.OpenAIChatCompletionModel, value.OpenAIKey,
