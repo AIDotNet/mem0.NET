@@ -13,7 +13,7 @@ public sealed class MemoryTool(
     [KernelFunction, Description("add a memory")]
     public async Task AddMemory([Required] [Description("Data to add to memory")] string data)
     {
-        await memoryToolService.AddMemory(data);
+        await memoryToolService.AddMemoryAsync(data);
     }
 
     [KernelFunction, Description("Update memory provided Id and data")]
@@ -21,13 +21,13 @@ public sealed class MemoryTool(
         [Required] [Description("Updated data for the memory")]
         string data)
     {
-        await memoryToolService.UpdateMemory(memoryId, data);
+        await memoryToolService.UpdateMemoryAsync(Guid.Parse(memoryId), data);
     }
 
 
     [KernelFunction, Description("Delete memory by memory_id")]
     public async Task DeleteMemory([Required] [Description("memoryid of the memory to update")] string memoryId)
     {
-        await memoryToolService.DeleteMemory(memoryId);
+        await memoryToolService.DeleteMemoryAsync(Guid.Parse(memoryId));
     }
 }

@@ -30,10 +30,11 @@ public static class ServiceCollectionExtensions
         }).WithDescription("创建记忆工具").WithDisplayName("创建记忆工具").WithTags("记忆");
 
         memoryService.MapGet("history/{memoryId}",
-                async (MemoryService memoryService, string memoryId) => await memoryService.GetHistory(memoryId))
+                async (MemoryService memoryService, string memoryId, int page, int pageSize) =>
+                    await memoryService.GetHistory(memoryId, page, pageSize))
             .WithDescription("获取历史").WithDisplayName("获取历史").WithTags("记忆");
 
-        memoryService.MapGet("memory/{memoryId}", async (MemoryService memoryService, string memoryId) =>
+        memoryService.MapGet("memory/{memoryId}", async (MemoryService memoryService, Guid memoryId) =>
                 await memoryService.GetMemory(memoryId))
             .WithDescription("获取记忆")
             .WithDisplayName("获取记忆")
@@ -65,7 +66,7 @@ public static class ServiceCollectionExtensions
             .WithTags("记忆");
 
         memoryService.MapDelete("memory/{memoryId}",
-                async (MemoryService memoryService, string memoryId) => await memoryService.Delete(memoryId))
+                async (MemoryService memoryService, Guid memoryId) => await memoryService.Delete(memoryId))
             .WithDescription("删除记忆")
             .WithDisplayName("删除记忆")
             .WithTags("记忆");

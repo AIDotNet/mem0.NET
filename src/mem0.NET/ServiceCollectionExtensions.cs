@@ -1,10 +1,7 @@
 ﻿using mem0.Core;
-using mem0.Core.VectorStores;
 using mem0.NET;
-using mem0.NET.EntityFramework.Services;
 using mem0.NET.Functions;
 using mem0.NET.Options;
-using mem0.NET.Service.DataAccess;
 using mem0.NET.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.SemanticKernel;
@@ -15,11 +12,18 @@ namespace Microsoft.Extensions.DependencyInjection;
 
 public static class ServiceCollectionExtensions
 {
+    /// <summary>
+    /// 添加 Mem0.NET 服务
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="value"></param>
+    /// <param name="openAiHttpClientHandler"></param>
+    /// <returns></returns>
     public static Mem0Builder AddMem0DotNet(this IServiceCollection services, Mem0Options value,
-        Action<DbContextOptionsBuilder> optionsAction, HttpClientHandler? openAiHttpClientHandler = null)
+        HttpClientHandler? openAiHttpClientHandler = null)
     {
-        services.AddSingleton<MemoryService>();
-        services.AddSingleton<MemoryToolService>();
+        services.AddScoped<MemoryService>();
+        services.AddScoped<MemoryToolService>();
 
         var handler = openAiHttpClientHandler ?? new OpenAIHttpClientHandler(value.OpenAIEndpoint);
 
@@ -31,13 +35,9 @@ public static class ServiceCollectionExtensions
             .AddOpenAITextEmbeddingGeneration(value.OpenAITextEmbeddingModel, value.OpenAIKey,
                 httpClient: openAiHttpClient);
 
-        kernelBuilder.Services.AddSingleton<MemoryTool>();
+        kernelBuilder.Services.AddScoped<MemoryTool>();
 
         kernelBuilder.Plugins.AddFromType<MemoryTool>();
-
-        services.AddDbContext<Mem0DbContext>(optionsAction);
-
-        services.AddSingleton<IHistoryService, HistoryService>();
 
         return new Mem0Builder(services);
     }

@@ -16,12 +16,12 @@ public class MemoryToolService(
     IVectorStoreService vectorStoreService,
     IOptions<Mem0Options> options)
 {
-    public async Task AddMemory(string data)
+    public async Task AddMemoryAsync(string data)
     {
         var currentValue = ApplicationContext.Current.Value;
 
         var embeddings = await textEmbeddingGenerationService.GenerateEmbeddingAsync(data);
-        var memoryId = Guid.NewGuid().ToString();
+        var memoryId = Guid.NewGuid();
         var metadata = new Dictionary<string, object>
         {
             { "data", data },
@@ -36,21 +36,21 @@ public class MemoryToolService(
             }
         }
 
-        await vectorStoreService.Insert(options.Value.CollectionName,
+        await vectorStoreService.InsertAsync(options.Value.CollectionName,
             [[..embeddings.ToArray()]],
             [metadata], [memoryId]);
 
-        await historyService.AddHistory(memoryId, string.Empty, data, "add");
+        await historyService.AddHistoryAsync(memoryId.ToString(), string.Empty, data, "add");
 
         logger.LogInformation("添加缓存" + data + " memoryId:" + memoryId);
 
         await Task.CompletedTask;
     }
 
-    public async Task UpdateMemory(string memoryId,
+    public async Task UpdateMemoryAsync(Guid memoryId,
         string data)
     {
-        var existingMemory = await vectorStoreService.Get(options.Value.CollectionName, memoryId);
+        var existingMemory = await vectorStoreService.GetAsync(options.Value.CollectionName, memoryId);
 
         var prevValue = existingMemory.MetaData["data"];
         var newMetadata = new Dictionary<string, object>
@@ -62,29 +62,32 @@ public class MemoryToolService(
         foreach (var o in existingMemory.MetaData)
         {
             if (o.Key != "data")
-                newMetadata.Add(o.Key, o.Value);
+            {
+                newMetadata[o.Key] = o.Value;
+            }
         }
-        
 
-        await vectorStoreService.Update(options.Value.CollectionName, memoryId,
+
+        await vectorStoreService.UpdateAsync(options.Value.CollectionName, memoryId,
             [..existingMemory.Vector.ToArray()], newMetadata);
 
-        await historyService.AddHistory(memoryId, prevValue.ToString(), data, "update");
+        await historyService.AddHistoryAsync(memoryId.ToString(), prevValue.ToString(), data, "update");
 
         logger.LogInformation("更新缓存 memoryId:" + memoryId + " data:" + data);
     }
 
 
-    public async Task DeleteMemory(string memoryId)
+    public async Task DeleteMemoryAsync(Guid memoryId)
     {
-        var existingMemory = await vectorStoreService.Get(options.Value.CollectionName, memoryId);
+        var existingMemory = await vectorStoreService.GetAsync(options.Value.CollectionName, memoryId);
 
-        var prevValue = existingMemory.MetaData["data"];
+        var prevValue = existingMemory.Text;
 
-        await vectorStoreService.Delete(options.Value.CollectionName, memoryId);
+        await vectorStoreService.DeleteAsync(options.Value.CollectionName, memoryId);
 
         logger.LogInformation("删除缓存 memoryId:" + memoryId);
 
-        await historyService.AddHistory(memoryId, prevValue.ToString(), string.Empty, "delete", true);
+
+        await historyService.AddHistoryAsync(memoryId.ToString(), prevValue, string.Empty, "delete", true);
     }
 }

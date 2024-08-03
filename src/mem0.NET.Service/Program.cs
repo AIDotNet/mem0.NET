@@ -8,7 +8,7 @@ namespace mem0.NET.Service;
 
 public static class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -26,17 +26,20 @@ public static class Program
         var qdrantOptions = builder.Configuration.GetSection("Qdrant")
             .Get<QdrantOptions>();
 
-        builder.Services.AddMem0DotNet(options,
-                optionsBuilder => { optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("Default")); })
+        builder.Services.AddMem0DotNet(options)
+            .WithMem0EntityFrameworkCore<MasterDbContext>(optionsBuilder =>
+            {
+                optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("Default"));
+            })
             .AddVectorQdrant(qdrantOptions);
 
         var app = builder.Build();
 
         using (var scope = app.Services.CreateScope())
         {
-            var dbContext = scope.ServiceProvider.GetRequiredService<Mem0DbContext>();
+            var dbContext = scope.ServiceProvider.GetRequiredService<MasterDbContext>();
 
-            dbContext.Database.EnsureCreatedAsync();
+            await dbContext.Database.EnsureCreatedAsync();
         }
 
         if (app.Environment.IsDevelopment())

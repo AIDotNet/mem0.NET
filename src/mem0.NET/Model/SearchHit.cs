@@ -1,8 +1,10 @@
-﻿namespace mem0.Core.Model;
+﻿using System.Text.Json;
+
+namespace mem0.Core.Model;
 
 public class SearchHit
 {
-    public object Id { get; set; } // 向量 ID
+    public Guid Id { get; set; } // 向量 ID
     public float Score { get; set; } // 相似度分数
     public Dictionary<string, object> Payload { get; set; } // 有效载荷
 
@@ -14,7 +16,7 @@ public class SearchHit
         {
             if (Payload.TryGetValue("data", out var data))
             {
-                return data.ToString();
+                return JsonSerializer.Deserialize<VectorDataPayload>(data.ToString()).stringValue;
             }
 
             return string.Empty;

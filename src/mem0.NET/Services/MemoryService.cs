@@ -34,13 +34,13 @@ public class MemoryService(
                                                  Just return the facts, preferences, and memories in bullet points:
                                                  Natural language text: {user_input}
                                                  User/Agent details: {metadata}
-                                                 
+
                                                  Constraint for deducing facts, preferences, and memories:
                                                  - The facts, preferences, and memories should be concise and informative.
                                                  - Don't start by "The person likes Pizza". Instead, start with "Likes Pizza".
                                                  - Don't remember the user/agent details provided. Only remember the facts, preferences, and memories.
                                                  - Output content in the original language
-                                                 
+
                                                  Deduced facts, preferences, and memories:
                                                  """;
 
@@ -102,10 +102,10 @@ public class MemoryService(
             new(AuthorRole.User, input.Prompt)
         });
 
-        await vectorStoreService.CreateCol(options.Value.CollectionName, 1536);
+        await vectorStoreService.CreateColAsync(options.Value.CollectionName, 1536);
 
         var existing_memories = (
-                await vectorStoreService.Search(options.Value.CollectionName, embeddings.ToArray(), 5, filters))
+                await vectorStoreService.SearchAsync(options.Value.CollectionName, embeddings.ToArray(), 5, filters))
             .Select(x => new
             {
                 id = x.Id,
@@ -156,11 +156,11 @@ public class MemoryService(
     {
         var embeddings = await textEmbeddingGenerationService.GenerateEmbeddingAsync(input.Data);
 
-        var memoryId = Guid.NewGuid().ToString();
+        var memoryId = Guid.NewGuid();
         input.MetaData.Add("data", input.Data);
         input.MetaData.Add("created_at", DateTime.Now);
 
-        await vectorStoreService.Insert(options.Value.CollectionName, [[..embeddings.ToArray()]],
+        await vectorStoreService.InsertAsync(options.Value.CollectionName, [[..embeddings.ToArray()]],
             [input.MetaData],
             [memoryId]);
     }
@@ -170,9 +170,9 @@ public class MemoryService(
     /// </summary>
     /// <param name="memoryId"></param>
     /// <returns></returns>
-    public async Task<VectorData> GetMemory(string memoryId)
+    public async Task<VectorData> GetMemory(Guid memoryId)
     {
-        var memory = await vectorStoreService.Get(options.Value.CollectionName, memoryId);
+        var memory = await vectorStoreService.GetAsync(options.Value.CollectionName, memoryId);
 
         if (memory == null)
         {
@@ -209,7 +209,7 @@ public class MemoryService(
             filters.Add("run_id", runId);
         }
 
-        var memories = await vectorStoreService.List(options.Value.CollectionName, filters, limit);
+        var memories = await vectorStoreService.GetListAsync(options.Value.CollectionName, filters, limit);
 
         return memories;
     }
@@ -245,19 +245,7 @@ public class MemoryService(
         }
 
         var memories =
-            await vectorStoreService.Search(options.Value.CollectionName, embeddings.ToArray(), limit, filters);
-
-        memories.ForEach(x =>
-        {
-            foreach (var o in x.Payload)
-            {
-                var str = o.Value.ToString();
-                if (!string.IsNullOrEmpty(str))
-                {
-                    x.Payload[o.Key] = JsonSerializer.Deserialize<VectorDataPayload>(str).stringValue;
-                }
-            }
-        });
+            await vectorStoreService.SearchAsync(options.Value.CollectionName, embeddings.ToArray(), limit, filters);
 
         return memories.Select(x => new VectorData()
         {
@@ -273,16 +261,16 @@ public class MemoryService(
     /// <param name="input"></param>
     public async Task Update(UpdateMemoryInput input)
     {
-        await memoryToolService.UpdateMemory(input.MemoryId, input.Data);
+        await memoryToolService.UpdateMemoryAsync(input.MemoryId, input.Data);
     }
 
     /// <summary>
     /// 删除指定记忆
     /// </summary>
     /// <param name="memoryId"></param>
-    public async Task Delete(string memoryId)
+    public async Task Delete(Guid memoryId)
     {
-        await memoryToolService.DeleteMemory(memoryId);
+        await memoryToolService.DeleteMemoryAsync(memoryId);
     }
 
     /// <summary>
@@ -316,11 +304,11 @@ public class MemoryService(
                 "At least one filter is required to delete all memories. If you want to delete all memories, use the `reset()` method.");
         }
 
-        var memories = await vectorStoreService.List(options.Value.CollectionName, filters);
+        var memories = await vectorStoreService.GetListAsync(options.Value.CollectionName, filters);
 
         foreach (var memory in memories)
         {
-            await memoryToolService.DeleteMemory(memory.Id.ToString());
+            await memoryToolService.DeleteMemoryAsync(memory.Id);
         }
     }
 
@@ -329,9 +317,9 @@ public class MemoryService(
     /// </summary>
     /// <param name="memoryId"></param>
     /// <returns></returns>
-    public async Task<List<History>> GetHistory(string memoryId)
+    public async Task<PagingDto<History>> GetHistory(string memoryId, int page, int pageSize)
     {
-        var histories = await historyService.GetHistories(memoryId);
+        var histories = await historyService.GetHistoriesAsync(memoryId, page, pageSize);
 
         return histories;
     }
@@ -341,8 +329,8 @@ public class MemoryService(
     /// </summary>
     public async Task Reset()
     {
-        await vectorStoreService.DeleteCol(options.Value.CollectionName);
+        await vectorStoreService.DeleteColAsync(options.Value.CollectionName);
 
-        await historyService.ResetHistory();
+        await historyService.ResetHistoryAsync();
     }
 }

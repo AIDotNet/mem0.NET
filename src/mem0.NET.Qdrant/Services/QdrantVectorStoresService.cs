@@ -12,7 +12,7 @@ namespace mem0.NET.Qdrabt.Services;
 
 public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreService
 {
-    public async Task CreateCol(string name, ulong vectorSize, MDistance distance = MDistance.Cosine)
+    public async Task CreateColAsync(string name, ulong vectorSize, MDistance distance = MDistance.Cosine)
     {
         if (await client.CollectionExistsAsync(name))
         {
@@ -26,8 +26,8 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         });
     }
 
-    public async Task Insert(string name, List<List<float>> vectors, List<Dictionary<string, object>> payloads = null,
-        List<object>? ids = null)
+    public async Task InsertAsync(string name, List<List<float>> vectors, List<Dictionary<string, object>> payloads = null,
+        List<Guid> ids = null)
     {
         var points = vectors.Select((vector, index) =>
         {
@@ -38,23 +38,7 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
 
             if (ids != null && ids.Count > index)
             {
-                var id = ids[index];
-                if (id is ulong u)
-                {
-                    item.Id = u;
-                }
-                else if (id is int i)
-                {
-                    item.Id = (ulong)i;
-                }
-                else if (id is long l)
-                {
-                    item.Id = (ulong)l;
-                }
-                else if (id is string s)
-                {
-                    item.Id = Guid.Parse(s);
-                }
+                item.Id = ids[index];
             }
 
             foreach (var payload in payloads[index])
@@ -108,22 +92,21 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         };
     }
 
-    public async Task<List<SearchHit>> Search(string name, float[] query, ulong limit = 5UL,
-        Dictionary<string, object> filters = null)
+    public async Task<List<SearchHit>> SearchAsync(string name, float[] query, ulong limit = 5UL,
+        Dictionary<string, object>? filters = null)
     {
         var filter = CreateFilter(filters);
         var hits = await client.SearchAsync(name, query.ToArray(), filter, limit: limit);
 
-        
         return hits.Select(hit => new SearchHit
         {
-            Id = hit.Id,
+            Id = Guid.Parse(hit.Id.Uuid),
             Score = hit.Score,
             Payload = hit.Payload.ToDictionary(x => x.Key, x => (object)x.Value),
         }).ToList();
     }
 
-    private Filter CreateFilter(Dictionary<string, object> filters)
+    private Filter CreateFilter(Dictionary<string, object>? filters)
     {
         var conditions = new List<Condition>();
 
@@ -170,27 +153,12 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         return conditions.Any() ? filterValue : null;
     }
 
-    public async Task Delete(string name, object vectorId)
+    public async Task DeleteAsync(string name, Guid vectorId)
     {
-        if (vectorId is ulong u)
-        {
-            await client.DeleteAsync(name, u);
-        }
-        else if (vectorId is int i)
-        {
-            await client.DeleteAsync(name, (ulong)i);
-        }
-        else if (vectorId is long l)
-        {
-            await client.DeleteAsync(name, (ulong)l);
-        }
-        else if (vectorId is string s)
-        {
-            await client.DeleteAsync(name, Guid.Parse(s));
-        }
+        await client.DeleteAsync(name, vectorId);
     }
 
-    public async Task Update(string name, object vectorId, List<float> vector = null,
+    public async Task UpdateAsync(string name, object vectorId, List<float> vector = null,
         Dictionary<string, object> payload = null)
     {
         var pointId = vectorId switch
@@ -241,41 +209,32 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         await client.UpsertAsync(name, new List<PointStruct> { point });
     }
 
-    public async Task<VectorData> Get(string name, object vectorId)
+    public async Task<VectorData> GetAsync(string name, Guid vectorId)
     {
-        var pointId = vectorId switch
-        {
-            ulong u => new PointId { Num = u },
-            int i => new PointId { Num = (ulong)i },
-            long l => new PointId { Num = (ulong)l },
-            string s => new PointId { Uuid = s },
-            _ => throw new ArgumentOutOfRangeException(nameof(vectorId), vectorId, null)
-        };
-
         var result = (await client.RetrieveAsync(name, ids: new List<PointId>()
         {
-            pointId
-        },true,true)).FirstOrDefault();
+            vectorId
+        }, true, true)).FirstOrDefault();
 
         return new VectorData()
         {
-            Id = result.Id.Num,
+            Id = Guid.Parse(result.Id.Uuid),
             Vector = result.Vectors.Vector.Data.ToList(),
             MetaData = result.Payload.ToDictionary(x => x.Key, x => (object)x.Value)
         };
     }
 
-    public async Task<IReadOnlyList<string>> ListCols()
+    public async Task<IReadOnlyList<string>> ListColsAsync()
     {
         return await client.ListCollectionsAsync();
     }
 
-    public async Task DeleteCol(string name)
+    public async Task DeleteColAsync(string name)
     {
         await client.DeleteCollectionAsync(name);
     }
 
-    public async Task<VectorInfo> ColInfo(string name)
+    public async Task<VectorInfo> ColInfoAsync(string name)
     {
         var result = await client.GetCollectionInfoAsync(name);
 
@@ -295,15 +254,18 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         };
     }
 
-    public async Task<List<VectorData>> List(string name, Dictionary<string, object> filters = null, uint limit = 100U)
+    public async Task<List<VectorData>> GetListAsync(string name, Dictionary<string, object>? filters = null, uint limit = 100U)
     {
         var filter = CreateFilter(filters);
 
-        var result = await client.ScrollAsync(name, filter, limit: limit);
+        var result = await client.ScrollAsync(name, filter, limit: limit, vectorsSelector: new WithVectorsSelector()
+        {
+            Enable = true,
+        });
 
         return result.Result.Select(hit => new VectorData()
         {
-            Id = hit.Id.Num,
+            Id = Guid.Parse(hit.Id.Uuid),
             Vector = hit.Vectors.Vector.Data,
             MetaData = hit.Payload.ToDictionary(x => x.Key, x => (object)x.Value)
         }).ToList();

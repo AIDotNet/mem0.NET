@@ -3,7 +3,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace mem0.NET.Service.DataAccess;
 
-public class Mem0DbContext(DbContextOptions<Mem0DbContext> options) : DbContext(options)
+/// <summary>
+///
+/// </summary>
+/// <param name="options"></param>
+public class Mem0DbContext<TDbContext>(DbContextOptions<TDbContext> options)
+    : DbContext(options) where TDbContext : DbContext
 {
     public DbSet<History> Histories { get; set; }
 
@@ -14,7 +19,11 @@ public class Mem0DbContext(DbContextOptions<Mem0DbContext> options) : DbContext(
         ConfigEntities(modelBuilder);
     }
 
-    private void ConfigEntities(ModelBuilder builder)
+    /// <summary>
+    /// Mem0 数据库实体配置
+    /// </summary>
+    /// <param name="builder"></param>
+    public static void ConfigEntities(ModelBuilder builder)
     {
         builder.Entity<History>(entity =>
         {

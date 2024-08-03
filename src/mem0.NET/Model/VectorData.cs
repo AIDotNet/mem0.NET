@@ -5,7 +5,7 @@ namespace mem0.Core.Model;
 
 public class VectorData
 {
-    public object Id { get; set; } // 向量 ID
+    public Guid Id { get; set; } // 向量 ID
 
     public float Score { get; set; } // 向量
 
@@ -19,7 +19,7 @@ public class VectorData
         {
             if (MetaData.TryGetValue("data", out var data))
             {
-                return data.ToString();
+                return JsonSerializer.Deserialize<VectorDataPayload>(data.ToString()).stringValue;
             }
 
             return string.Empty;
