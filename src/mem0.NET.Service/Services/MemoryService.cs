@@ -1,7 +1,4 @@
 ﻿using mem0.Core;
-using mem0.Core.VectorStores;
-using mem0.NET.Functions;
-using mem0.NET.Options;
 using mem0.NET.Services;
 
 #pragma warning disable SKEXP0001

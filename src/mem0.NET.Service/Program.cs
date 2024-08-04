@@ -1,5 +1,4 @@
 using mem0.NET.Options;
-using mem0.NET.Service.DataAccess;
 using mem0.NET.Service.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Options;
@@ -23,6 +22,7 @@ public static class Program
 
         var options = builder.Configuration.GetSection("Mem0")
             .Get<Mem0Options>();
+        
         var qdrantOptions = builder.Configuration.GetSection("Qdrant")
             .Get<QdrantOptions>();
 
@@ -50,6 +50,6 @@ public static class Program
 
         app.MapMemoryService();
 
-        app.Run();
+        await app.RunAsync();
     }
 }
