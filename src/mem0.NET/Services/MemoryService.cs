@@ -3,8 +3,8 @@ using System.Text.Json;
 using mem0.Core;
 using mem0.Core.Model;
 using mem0.Core.VectorStores;
-using mem0.NET.Functions;
 using mem0.NET.Options;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
@@ -21,12 +21,11 @@ namespace mem0.NET.Services;
 /// Memory service.
 /// </summary>
 public class MemoryService(
+    IServiceProvider serviceProvider,
     IVectorStoreService vectorStoreService,
-    MemoryToolService memoryToolService,
     ITextEmbeddingGenerationService textEmbeddingGenerationService,
     IChatCompletionService chatCompletionService,
     IOptions<Mem0Options> options,
-    Kernel kernel,
     IHistoryService historyService)
 {
     private const string MemoryDeductionPrompt = """
@@ -124,6 +123,9 @@ public class MemoryService(
         var messages = get_update_memory_messages(serialized_existing_memories, extracted_memories.Content);
 
         chatHistory.AddRange(messages);
+
+        using var scope = serviceProvider.CreateScope();
+        var kernel = scope.ServiceProvider.GetService<Kernel>();
 
         var content = await chatCompletionService.GetChatMessageContentAsync(chatHistory,
             new OpenAIPromptExecutionSettings()
@@ -261,6 +263,9 @@ public class MemoryService(
     /// <param name="input"></param>
     public async Task Update(UpdateMemoryInput input)
     {
+        using var scope = serviceProvider.CreateScope();
+        var memoryToolService = scope.ServiceProvider.GetService<MemoryToolService>();
+
         await memoryToolService.UpdateMemoryAsync(input.MemoryId, input.Data);
     }
 
@@ -270,6 +275,8 @@ public class MemoryService(
     /// <param name="memoryId"></param>
     public async Task Delete(Guid memoryId)
     {
+        using var scope = serviceProvider.CreateScope();
+        var memoryToolService = scope.ServiceProvider.GetService<MemoryToolService>();
         await memoryToolService.DeleteMemoryAsync(memoryId);
     }
 
@@ -305,6 +312,9 @@ public class MemoryService(
         }
 
         var memories = await vectorStoreService.GetListAsync(options.Value.CollectionName, filters);
+
+        using var scope = serviceProvider.CreateScope();
+        var memoryToolService = scope.ServiceProvider.GetService<MemoryToolService>();
 
         foreach (var memory in memories)
         {

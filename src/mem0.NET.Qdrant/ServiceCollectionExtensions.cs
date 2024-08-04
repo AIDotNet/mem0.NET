@@ -13,10 +13,10 @@ public static class ServiceCollectionExtensions
     /// <param name="services"></param>
     /// <param name="options"></param>
     /// <returns></returns>
-    public static Mem0Builder AddVectorQdrant(this Mem0Builder services,
+    public static Mem0Builder WithVectorQdrant(this Mem0Builder services,
         QdrantOptions options)
     {
-        services.Services.AddSingleton(_ =>
+        services.Services.AddScoped(_ =>
         {
             var client = new QdrantClient(options.Host, options.Port, options.Https, options.ApiKey,
                 options.GrpcTimeout);
@@ -24,7 +24,7 @@ public static class ServiceCollectionExtensions
             return client;
         });
 
-        services.Services.AddSingleton<IVectorStoreService, QdrantVectorStoresService>();
+        services.Services.AddScoped<IVectorStoreService, QdrantVectorStoresService>();
 
         return services;
     }

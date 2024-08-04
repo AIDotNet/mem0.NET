@@ -1,7 +1,7 @@
 ﻿using mem0.Core;
 using mem0.Core.VectorStores;
 using mem0.NET.Options;
-using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel.Embeddings;
 
@@ -10,15 +10,18 @@ using Microsoft.SemanticKernel.Embeddings;
 namespace mem0.NET.Services;
 
 public class MemoryToolService(
-    ILogger<MemoryToolService> logger,
-    ITextEmbeddingGenerationService textEmbeddingGenerationService,
     IHistoryService historyService,
+    IServiceProvider serviceProvider,
     IVectorStoreService vectorStoreService,
     IOptions<Mem0Options> options)
 {
     public async Task AddMemoryAsync(string data)
     {
         var currentValue = ApplicationContext.Current.Value;
+
+        await using var scope = serviceProvider.CreateAsyncScope();
+        var textEmbeddingGenerationService =
+            scope.ServiceProvider.GetRequiredService<ITextEmbeddingGenerationService>();
 
         var embeddings = await textEmbeddingGenerationService.GenerateEmbeddingAsync(data);
         var memoryId = Guid.NewGuid();
@@ -41,8 +44,6 @@ public class MemoryToolService(
             [metadata], [memoryId]);
 
         await historyService.AddHistoryAsync(memoryId.ToString(), string.Empty, data, "add");
-
-        logger.LogInformation("添加缓存" + data + " memoryId:" + memoryId);
 
         await Task.CompletedTask;
     }
@@ -72,8 +73,6 @@ public class MemoryToolService(
             [..existingMemory.Vector.ToArray()], newMetadata);
 
         await historyService.AddHistoryAsync(memoryId.ToString(), prevValue.ToString(), data, "update");
-
-        logger.LogInformation("更新缓存 memoryId:" + memoryId + " data:" + data);
     }
 
 
@@ -84,9 +83,6 @@ public class MemoryToolService(
         var prevValue = existingMemory.Text;
 
         await vectorStoreService.DeleteAsync(options.Value.CollectionName, memoryId);
-
-        logger.LogInformation("删除缓存 memoryId:" + memoryId);
-
 
         await historyService.AddHistoryAsync(memoryId.ToString(), prevValue, string.Empty, "delete", true);
     }

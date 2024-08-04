@@ -29,15 +29,17 @@ public static class ServiceCollectionExtensions
 
         var openAiHttpClient = new HttpClient(handler);
 
-        var kernelBuilder = services.AddKernel()
+        var kernelBuilder = services
+            .AddKernel()
             .AddOpenAIChatCompletion(value.OpenAIChatCompletionModel, value.OpenAIKey,
                 httpClient: openAiHttpClient)
             .AddOpenAITextEmbeddingGeneration(value.OpenAITextEmbeddingModel, value.OpenAIKey,
                 httpClient: openAiHttpClient);
-
+        
         kernelBuilder.Services.AddScoped<MemoryTool>();
-
+        
         kernelBuilder.Plugins.AddFromType<MemoryTool>();
+
 
         return new Mem0Builder(services);
     }
