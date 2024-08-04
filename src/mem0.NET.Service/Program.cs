@@ -31,7 +31,7 @@ public static class Program
             {
                 optionsBuilder.UseNpgsql(builder.Configuration.GetConnectionString("Default"));
             })
-            .AddVectorQdrant(qdrantOptions);
+            .WithVectorQdrant(qdrantOptions);
 
         var app = builder.Build();
 
