@@ -29,4 +29,9 @@ public class Mem0Options
     /// Collection Name
     /// </summary>
     public string CollectionName { get; set; }
+
+    /// <summary>
+    /// Vector size
+    /// </summary>
+    public ulong VectorSize { get; set; } = 1536;
 }
