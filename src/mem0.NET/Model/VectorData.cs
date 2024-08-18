@@ -19,7 +19,10 @@ public class VectorData
         {
             if (MetaData.TryGetValue("data", out var data))
             {
-                return JsonSerializer.Deserialize<VectorDataPayload>(data.ToString()).stringValue;
+                return JsonSerializer.Deserialize<VectorDataPayload>(data.ToString(),new JsonSerializerOptions()
+                {
+                    PropertyNameCaseInsensitive = true
+                }).stringValue;
             }
 
             return string.Empty;
