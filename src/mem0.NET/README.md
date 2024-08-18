@@ -96,3 +96,8 @@ public TestService(MemoryService memoryService)
 }
 ```
 
+## 安装Qdrant
+
+```bash
+docker run -d --name qdrant -p 6334:6334 -v /path/to/data:/data qdrant/qdrant
+```
