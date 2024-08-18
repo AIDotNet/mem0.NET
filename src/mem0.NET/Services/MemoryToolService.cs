@@ -67,10 +67,10 @@ public class MemoryToolService(
         var existingMemory = await vectorStoreService.GetAsync(options.Value.CollectionName, memoryId);
 
         var prevValue = existingMemory.MetaData["data"];
-        var newMetadata = new Dictionary<string, object>
+        var newMetadata = new Dictionary<string, string>
         {
             { "data", prevValue },
-            { "updated_at", DateTime.Now },
+            { "updated_at", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") },
         };
 
         foreach (var o in existingMemory.MetaData)
@@ -84,18 +84,9 @@ public class MemoryToolService(
         await vectorStoreService.UpdateAsync(options.Value.CollectionName, memoryId,
             [..existingMemory.Vector.ToArray()], newMetadata);
 
-        var memoryText = string.Empty;
-        try
-        {
-            memoryText = JsonSerializer.Deserialize<VectorDataPayload>(prevValue.ToString())?.stringValue;
-        }
-        catch
-        {
-            memoryText = prevValue.ToString();
-        }
 
         await historyService.AddHistoryAsync(memoryId.ToString(),
-            memoryText, data, "update", false, ApplicationContext.HistoryUserId.Value,
+            prevValue, data, "update", false, ApplicationContext.HistoryUserId.Value,
             ApplicationContext.HistoryTrackId.Value);
     }
 

@@ -103,7 +103,7 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         {
             Id = Guid.Parse(hit.Id.Uuid),
             Score = hit.Score,
-            Payload = hit.Payload.ToDictionary(x => x.Key, x => (object)x.Value),
+            Payload = hit.Payload.ToDictionary(x => x.Key, x => x.Value.StringValue),
         }).ToList();
     }
 
@@ -160,7 +160,7 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
     }
 
     public async Task UpdateAsync(string name, Guid vectorId, List<float> vector = null,
-        Dictionary<string, object> payload = null)
+        Dictionary<string, string> payload = null)
     {
         var point = new PointStruct()
         {
@@ -172,30 +172,7 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         {
             foreach (var item in payload)
             {
-                if (item.Value is string str)
-                {
-                    point.Payload.Add(item.Key, str);
-                }
-                else if (item.Value is float f)
-                {
-                    point.Payload.Add(item.Key, f);
-                }
-                else if (item.Value is int i)
-                {
-                    point.Payload.Add(item.Key, i);
-                }
-                else if (item.Value is bool b)
-                {
-                    point.Payload.Add(item.Key, b);
-                }
-                else if (item.Value is Color color)
-                {
-                    point.Payload.Add(item.Key, color.ToArgb());
-                }
-                else
-                {
-                    point.Payload.Add(item.Key, JsonSerializer.Serialize(item.Value));
-                }
+                point.Payload.Add(item.Key, item.Value);
             }
         }
 
@@ -214,7 +191,7 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         {
             Id = new Guid(result.Id.Uuid),
             Vector = result.Vectors.Vector.Data.ToList(),
-            MetaData = result.Payload.ToDictionary(x => x.Key, x => (object)x.Value)
+            MetaData = result.Payload.ToDictionary(x => x.Key, x => x.Value.StringValue)
         };
     }
 
@@ -262,7 +239,7 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         {
             Id = Guid.Parse(hit.Id.Uuid),
             Vector = hit.Vectors.Vector.Data,
-            MetaData = hit.Payload.ToDictionary(x => x.Key, x => (object)x.Value)
+            MetaData = hit.Payload.ToDictionary(x => x.Key, x => x.Value.StringValue)
         }).ToList();
     }
 }

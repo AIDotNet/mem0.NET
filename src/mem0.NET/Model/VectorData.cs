@@ -11,21 +11,13 @@ public class VectorData
 
     public IReadOnlyList<float> Vector { get; set; }
 
-    public Dictionary<string, object> MetaData { get; set; } // 有效载荷
+    public Dictionary<string, string> MetaData { get; set; } // 有效载荷
 
     public string? Text
     {
         get
         {
-            if (MetaData.TryGetValue("data", out var data))
-            {
-                return JsonSerializer.Deserialize<VectorDataPayload>(data.ToString(),new JsonSerializerOptions()
-                {
-                    PropertyNameCaseInsensitive = true
-                }).stringValue;
-            }
-
-            return string.Empty;
+            return MetaData["data"];
         }
     } // 文本
 }

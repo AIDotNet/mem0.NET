@@ -251,7 +251,7 @@ public class MemoryService(
         {
             Id = x.Id,
             Score = x.Score,
-            MetaData = x.Payload
+            MetaData = x.Payload.ToDictionary(y => y.Key, y => y.Value),
         }).ToList();
     }
 
