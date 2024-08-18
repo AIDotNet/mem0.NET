@@ -44,7 +44,7 @@ public interface IVectorStoreService
     /// <param name="vector"></param>
     /// <param name="payload"></param>
     /// <returns></returns>
-    public Task UpdateAsync(string name, object vectorId, List<float> vector = null,
+    public Task UpdateAsync(string name, Guid vectorId, List<float> vector = null,
         Dictionary<string, object> payload = null);
 
     /// <summary>

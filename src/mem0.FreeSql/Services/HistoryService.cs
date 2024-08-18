@@ -12,7 +12,7 @@ public sealed class HistoryService(IFreeSql dbContext)
     : IHistoryService
 {
     public async Task AddHistoryAsync(string memoryId, string prevValue, string newValue, string @event,
-        bool isDeleted = false)
+        bool isDeleted = false, string? userId = null, string? trackId = null)
     {
         await dbContext.Insert<History>(new History
         {
@@ -21,7 +21,9 @@ public sealed class HistoryService(IFreeSql dbContext)
             NewValue = newValue,
             Event = @event,
             DateTime = DateTime.Now,
-            IsDeleted = isDeleted
+            IsDeleted = isDeleted,
+            UserId = userId,
+            TrackId = trackId
         }).ExecuteAffrowsAsync();
     }
 

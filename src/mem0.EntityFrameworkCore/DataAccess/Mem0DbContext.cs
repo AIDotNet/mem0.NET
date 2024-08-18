@@ -33,9 +33,9 @@ public class Mem0DbContext<TDbContext>(DbContextOptions<TDbContext> options)
 
             entity.Property(e => e.MemoryId).HasMaxLength(50);
 
-            entity.Property(e => e.PrevValue).HasMaxLength(200);
+            entity.Property(e => e.PrevValue).HasMaxLength(-1);
 
-            entity.Property(e => e.NewValue).HasMaxLength(200);
+            entity.Property(e => e.NewValue).HasMaxLength(-1);
 
             entity.Property(e => e.Event).HasMaxLength(50);
 

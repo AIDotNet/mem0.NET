@@ -16,7 +16,7 @@ public sealed class HistoryService<TDbContext>(TDbContext dbContext)
     : IHistoryService where TDbContext : Mem0DbContext<TDbContext>
 {
     public async Task AddHistoryAsync(string memoryId, string prevValue, string newValue, string @event,
-        bool isDeleted = false)
+        bool isDeleted = false, string? userId = null, string? trackId = null)
     {
         await dbContext.Histories.AddAsync(new History
         {
@@ -25,8 +25,12 @@ public sealed class HistoryService<TDbContext>(TDbContext dbContext)
             NewValue = newValue,
             Event = @event,
             DateTime = DateTime.Now,
-            IsDeleted = isDeleted
+            IsDeleted = isDeleted, 
+            UserId = userId,
+            TrackId = trackId
         });
+        
+        await dbContext.SaveChangesAsync();
     }
 
     /// <inheritdoc />

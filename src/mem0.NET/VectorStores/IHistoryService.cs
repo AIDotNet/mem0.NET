@@ -15,8 +15,10 @@ public interface IHistoryService
     /// <param name="newValue">新数据</param>
     /// <param name="event">事件类型</param>
     /// <param name="isDeleted">是否删除</param>
+    /// <param name="userId"></param>
+    /// <param name="trackId"></param>
     /// <returns></returns>
-    Task AddHistoryAsync(string memoryId, string prevValue, string newValue, string @event, bool isDeleted = false);
+    Task AddHistoryAsync(string memoryId, string prevValue, string newValue, string @event, bool isDeleted = false, string? userId = null, string? trackId = null);
 
     /// <summary>
     /// 获取历史记录

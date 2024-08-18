@@ -1,4 +1,6 @@
-﻿using mem0.Core;
+﻿using System.Text.Json;
+using mem0.Core;
+using mem0.Core.Model;
 using mem0.Core.VectorStores;
 using mem0.NET.Options;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,9 +17,13 @@ public class MemoryToolService(
     IVectorStoreService vectorStoreService,
     IOptions<Mem0Options> options)
 {
+    /// <summary>
+    /// 添加记忆
+    /// </summary>
+    /// <param name="data"></param>
     public async Task AddMemoryAsync(string data)
     {
-        var currentValue = ApplicationContext.Current.Value;
+        var currentValue = ApplicationContext.AddMemoryMetadata.Value;
 
         await using var scope = serviceProvider.CreateAsyncScope();
         var textEmbeddingGenerationService =
@@ -43,11 +49,18 @@ public class MemoryToolService(
             [[..embeddings.ToArray()]],
             [metadata], [memoryId]);
 
-        await historyService.AddHistoryAsync(memoryId.ToString(), string.Empty, data, "add");
+        await historyService.AddHistoryAsync(memoryId.ToString(),
+            string.Empty, data, "add", false, ApplicationContext.HistoryUserId.Value,
+            ApplicationContext.HistoryTrackId.Value);
 
         await Task.CompletedTask;
     }
 
+    /// <summary>
+    /// 更新记忆
+    /// </summary>
+    /// <param name="memoryId"></param>
+    /// <param name="data"></param>
     public async Task UpdateMemoryAsync(Guid memoryId,
         string data)
     {
@@ -72,10 +85,26 @@ public class MemoryToolService(
         await vectorStoreService.UpdateAsync(options.Value.CollectionName, memoryId,
             [..existingMemory.Vector.ToArray()], newMetadata);
 
-        await historyService.AddHistoryAsync(memoryId.ToString(), prevValue.ToString(), data, "update");
+        var memoryText = string.Empty;
+        try
+        {
+            memoryText = JsonSerializer.Deserialize<VectorDataPayload>(prevValue.ToString())?.stringValue;
+        }
+        catch
+        {
+            memoryText = prevValue.ToString();
+        }
+
+        await historyService.AddHistoryAsync(memoryId.ToString(),
+            memoryText, data, "update", false, ApplicationContext.HistoryUserId.Value,
+            ApplicationContext.HistoryTrackId.Value);
     }
 
 
+    /// <summary>
+    /// 删除记忆
+    /// </summary>
+    /// <param name="memoryId"></param>
     public async Task DeleteMemoryAsync(Guid memoryId)
     {
         var existingMemory = await vectorStoreService.GetAsync(options.Value.CollectionName, memoryId);
@@ -84,6 +113,8 @@ public class MemoryToolService(
 
         await vectorStoreService.DeleteAsync(options.Value.CollectionName, memoryId);
 
-        await historyService.AddHistoryAsync(memoryId.ToString(), prevValue, string.Empty, "delete", true);
+        await historyService.AddHistoryAsync(ApplicationContext.HistoryTrackId.Value ?? memoryId.ToString(), prevValue,
+            string.Empty, "delete", true, ApplicationContext.HistoryUserId.Value,
+            ApplicationContext.HistoryTrackId.Value);
     }
 }

@@ -26,7 +26,8 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         });
     }
 
-    public async Task InsertAsync(string name, List<List<float>> vectors, List<Dictionary<string, object>> payloads = null,
+    public async Task InsertAsync(string name, List<List<float>> vectors,
+        List<Dictionary<string, object>> payloads = null,
         List<Guid> ids = null)
     {
         var points = vectors.Select((vector, index) =>
@@ -38,7 +39,7 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
 
             if (ids != null && ids.Count > index)
             {
-                item.Id = ids[index];
+                item.Id = new PointId(ids[index]);
             }
 
             foreach (var payload in payloads[index])
@@ -158,20 +159,12 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         await client.DeleteAsync(name, vectorId);
     }
 
-    public async Task UpdateAsync(string name, object vectorId, List<float> vector = null,
+    public async Task UpdateAsync(string name, Guid vectorId, List<float> vector = null,
         Dictionary<string, object> payload = null)
     {
-        var pointId = vectorId switch
-        {
-            ulong u => new PointId { Num = u },
-            int i => new PointId { Num = (ulong)i },
-            long l => new PointId { Num = (ulong)l },
-            string s => new PointId { Uuid = s },
-            _ => throw new ArgumentOutOfRangeException(nameof(vectorId), vectorId, null)
-        };
         var point = new PointStruct()
         {
-            Id = pointId,
+            Id = vectorId,
             Vectors = vector?.ToArray()
         };
 
@@ -216,9 +209,10 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
             vectorId
         }, true, true)).FirstOrDefault();
 
+
         return new VectorData()
         {
-            Id = Guid.Parse(result.Id.Uuid),
+            Id = new Guid(result.Id.Uuid),
             Vector = result.Vectors.Vector.Data.ToList(),
             MetaData = result.Payload.ToDictionary(x => x.Key, x => (object)x.Value)
         };
@@ -254,7 +248,8 @@ public class QdrantVectorStoresService(QdrantClient client) : IVectorStoreServic
         };
     }
 
-    public async Task<List<VectorData>> GetListAsync(string name, Dictionary<string, object>? filters = null, uint limit = 100U)
+    public async Task<List<VectorData>> GetListAsync(string name, Dictionary<string, object>? filters = null,
+        uint limit = 100U)
     {
         var filter = CreateFilter(filters);
 

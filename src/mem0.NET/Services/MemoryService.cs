@@ -126,7 +126,7 @@ public class MemoryService(
 
         using var scope = serviceProvider.CreateScope();
         var kernel = scope.ServiceProvider.GetService<Kernel>();
-
+        
         var content = await chatCompletionService.GetChatMessageContentAsync(chatHistory,
             new OpenAIPromptExecutionSettings()
             {
@@ -162,9 +162,7 @@ public class MemoryService(
         input.MetaData.Add("data", input.Data);
         input.MetaData.Add("created_at", DateTime.Now);
 
-        await vectorStoreService.InsertAsync(options.Value.CollectionName, [[..embeddings.ToArray()]],
-            [input.MetaData],
-            [memoryId]);
+        await vectorStoreService.GetAsync(options.Value.CollectionName, memoryId);
     }
 
     /// <summary>

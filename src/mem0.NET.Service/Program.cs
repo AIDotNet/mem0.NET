@@ -22,7 +22,7 @@ public static class Program
 
         var options = builder.Configuration.GetSection("Mem0")
             .Get<Mem0Options>();
-        
+
         var qdrantOptions = builder.Configuration.GetSection("Qdrant")
             .Get<QdrantOptions>();
 
