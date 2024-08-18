@@ -110,7 +110,7 @@ public class MemoryService(
                 id = x.Id,
                 score = x.Score,
                 metaData = x.Payload,
-                text = JsonSerializer.Deserialize<VectorDataPayload>(x.Payload["data"].ToString()).stringValue
+                text = x.Text
             });
 
         var serialized_existing_memories = existing_memories.Select(x => new
