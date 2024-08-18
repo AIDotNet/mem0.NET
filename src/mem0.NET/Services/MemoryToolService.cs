@@ -80,8 +80,7 @@ public class MemoryToolService(
                 newMetadata[o.Key] = o.Value;
             }
         }
-
-
+        
         await vectorStoreService.UpdateAsync(options.Value.CollectionName, memoryId,
             [..existingMemory.Vector.ToArray()], newMetadata);
 

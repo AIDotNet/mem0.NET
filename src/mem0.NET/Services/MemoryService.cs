@@ -110,7 +110,7 @@ public class MemoryService(
                 id = x.Id,
                 score = x.Score,
                 metaData = x.Payload,
-                text = x.Payload["data"]
+                text = JsonSerializer.Deserialize<VectorDataPayload>(x.Payload["data"].ToString()).stringValue
             });
 
         var serialized_existing_memories = existing_memories.Select(x => new
@@ -126,7 +126,7 @@ public class MemoryService(
 
         using var scope = serviceProvider.CreateScope();
         var kernel = scope.ServiceProvider.GetService<Kernel>();
-        
+
         var content = await chatCompletionService.GetChatMessageContentAsync(chatHistory,
             new OpenAIPromptExecutionSettings()
             {

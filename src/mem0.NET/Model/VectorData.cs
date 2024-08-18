@@ -26,8 +26,3 @@ public class VectorData
         }
     } // 文本
 }
-
-public class VectorDataPayload
-{
-    public string stringValue { get; set; }
-}
