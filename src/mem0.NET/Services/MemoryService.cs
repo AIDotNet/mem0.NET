@@ -101,7 +101,7 @@ public class MemoryService(
             new(AuthorRole.User, input.Prompt)
         });
 
-        await vectorStoreService.CreateColAsync(options.Value.CollectionName, 1536);
+        await vectorStoreService.CreateColAsync(options.Value.CollectionName, options.Value.VectorSize);
 
         var existing_memories = (
                 await vectorStoreService.SearchAsync(options.Value.CollectionName, embeddings.ToArray(), 5, filters))
