@@ -8,7 +8,7 @@ mem0.NET是用[mem0](https://github.com/mem0ai/mem0)的python版本移植成.NET
   --mem0.NET 是项目主要实现，提供了核心Function
   --mem0.NET.Qadrant 是项目中向量数据库的Qadrant的实现
   --mem0.EntityFrameworkCore 是EFCore的数据库实现
-  --mem0.FreeSql 是FreeSqk的数据实现
+  --mem0.FreeSql 是FreeSql的数据实现
   --mem0.NET.Service 是项目默认提供的WebAPI服务实现，默认使用`postgres`数据库存储记忆
 ```
 
